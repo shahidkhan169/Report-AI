@@ -77,14 +77,15 @@ def query_model(prompt, temperature=0.7, max_length=1024):
     ]
     
     sequences = pipeline(
-        eos_token_id=terminators,   
         prompt,
         do_sample=True,
         top_p=0.9,
         temperature=temperature,
         max_new_tokens=max_length,
         return_full_text=False,
-        pad_token_id=pipeline.model.config.eos_token_id
+        pad_token_id=pipeline.model.config.eos_token_id,
+        eos_token_id=terminators   
+
     )
     
     return sequences[0]['generated_text']
