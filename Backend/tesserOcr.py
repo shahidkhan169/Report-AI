@@ -30,7 +30,8 @@ if not ngrok_auth_token:
     raise ValueError("NGROK_AUTH_TOKEN is not set")
 
 ngrok.set_auth_token(ngrok_auth_token)
-public_url = ngrok.connect(8000, domain="bream-dear-physically.ngrok-free.app")  # This will give you the ngrok public URL
+listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="bream-dear-physically.ngrok-free.app")
+#public_url = ngrok.connect(8000, domain="bream-dear-physically.ngrok-free.app")  # This will give you the ngrok public URL
 print(f"FastAPI is live at: {public_url}")
 
 # System message for LLaMA
