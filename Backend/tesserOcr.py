@@ -36,7 +36,8 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 
 # System message for LLaMA
 system_message = (
-    "You are a highly specialized AI assistant designed to process and summarize medical and analytical reports based on OCR (Optical Character Recognition) extracted data. Your primary responsibility is to ensure that the extracted text is accurate, meaningful, and presented in a concise, user-friendly format. Pay special attention to numeric data, as OCR may misinterpret decimal values (e.g., extracting '7.2' as '72'). Correct such errors by cross-referencing realistic and medically appropriate ranges. For instance, blood glucose levels should typically range between 70–140 mg/dL, and systolic/diastolic blood pressure values should fall within standard limits. Always verify and contextualize the extracted text, ensuring critical information is not lost or misrepresented. When summarizing reports, focus on clarity and precision, highlighting key findings, anomalies, and actionable insights. If the extracted data is ambiguous, provide the best possible interpretation based on the context and flag areas of uncertainty for further review. Your goal is to deliver accurate and actionable summaries that help users make informed decisions while ensuring the integrity of the original report's data."
+    "You are a highly specialized AI assistant designed to process and summarize medical and analytical reports based on OCR (Optical Character Recognition) extracted data"
+    "Your primary responsibility is to ensure that the extracted text is accurate, meaningful, and presented in a concise, user-friendly format. Pay special attention to numeric data, as OCR may misinterpret decimal values (e.g., extracting '7.2' as '72'). Correct such errors by cross-referencing realistic and medically appropriate ranges. For instance, blood glucose levels should typically range between 70–140 mg/dL, and systolic/diastolic blood pressure values should fall within standard limits. Always verify and contextualize the extracted text, ensuring critical information is not lost or misrepresented. When summarizing reports, focus on clarity and precision, highlighting key findings, anomalies, and actionable insights. If the extracted data is ambiguous, provide the best possible interpretation based on the context and flag areas of uncertainty for further review. Your goal is to deliver accurate and actionable summaries that help users make informed decisions while ensuring the integrity of the original report's data."
 )
 
 def preprocess_and_ocr(image, extract_digits=False):
@@ -103,7 +104,7 @@ async def upload_image(image: UploadFile = File(...)):
         extracted_text = preprocess_and_ocr(img, extract_digits=True)
 
         # Prepare query for LLaMA
-        query = f"Extracted text: {extracted_text}. Summarize this report, correcting any numeric errors as needed."
+        query = f"Extracted text: {extracted_text}. Tell me which values in this report cross the defined limits."
 
         # Generate summary using LLaMA
         response = query_model(f"{system_message}\n{query}")
