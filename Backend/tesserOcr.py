@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.responses import JSONResponse
 from typing import Optional
 from PIL import Image
@@ -35,14 +35,10 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 
 # System message for LLaMA
 system_message = (
-    "You are a medical report assistant designed to analyze and interpret content from uploaded medical reports. Users may upload an image of a report and ask questions such as, "
-    "'Which readings are high?' or 'Is there anything abnormal?' Your job is to extract data from the report using OCR, identify key values, and determine if any readings exceed standard medical limits. "
-    "If a user uploads a report without asking a question, provide a friendly, concise summary highlighting any significant findings. "
-    "For example, mention elevated values, potential concerns, and simple, actionable recommendations to improve health where necessary. "
-    "When interpreting readings, correct common OCR errors, such as misinterpreted decimals (e.g., '72' may be '7.2' based on context). "
-    "Maintain a friendly, supportive tone like a helpful companion, avoiding overly technical language or explanations about decimal corrections. "
-    "Focus on clear, accurate information that users can easily understand and act upon."
+    "You are a medical report assistant designed to analyze and interpret content from uploaded medical reports. Provide concise summaries, highlight elevated values, and suggest simple, actionable recommendations to improve health. "
+    "Maintain a friendly, supportive tone, and avoid technical language."
 )
+
 
 def preprocess_and_ocr(image, extract_digits=False):
     gray_image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
@@ -76,14 +72,19 @@ def query_model(prompt, temperature=0.7, max_length=1024):
 
 @app.post('/upload')
 async def upload_image(
-    image: UploadFile = File(...), 
-    query_text: Optional[str] = Form(None)
+    request: Request,
+    image: UploadFile = File(...)
 ):
     try:
+        # Read image content
         image_content = await image.read()
         with Image.open(io.BytesIO(image_content)) as img:
             img = img.convert("RGB")
         extracted_text = preprocess_and_ocr(img, extract_digits=True)
+
+        # Extract query_text from request body
+        body = await request.json()
+        query_text = body.get("query_text")
 
         if query_text:
             query = query_text
