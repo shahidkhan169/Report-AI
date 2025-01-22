@@ -71,15 +71,22 @@ def preprocess_and_ocr(image, extract_digits=False):
     return text
 
 def query_model(prompt, temperature=0.7, max_length=1024):
+    terminators = [
+        pipeline.tokenizer.eos_token_id,
+        pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+    ]
+    
     sequences = pipeline(
+        eos_token_id=terminators,   
         prompt,
         do_sample=True,
         top_p=0.9,
         temperature=temperature,
         max_new_tokens=max_length,
         return_full_text=False,
-        pad_token_id=pipeline.model.config.pad_token_id
+        pad_token_id=pipeline.model.config.eos_token_id
     )
+    
     return sequences[0]['generated_text']
 
 @app.post('/upload')
