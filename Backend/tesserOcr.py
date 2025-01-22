@@ -24,6 +24,11 @@ pipeline = transformers.pipeline(
     device_map="auto"
 )
 
+terminators = [
+    pipeline.tokenizer.eos_token_id,
+    pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+]
+
 # Set up ngrok
 ngrok_auth_token = "2lBvQQTBJSwgRw2dTqZ1F9vqCAG_4TWPvfo4pzRK4AHkF5tpS"
 if not ngrok_auth_token:
@@ -71,11 +76,6 @@ def preprocess_and_ocr(image, extract_digits=False):
     return text
 
 def query_model(prompt, temperature=0.7, max_length=1024):
-    terminators = [
-        pipeline.tokenizer.eos_token_id,
-        pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
-    ]
-    
     sequences = pipeline(
         prompt,
         do_sample=True,
