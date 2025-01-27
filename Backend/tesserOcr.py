@@ -35,12 +35,17 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 
 # System message for LLaMA
 system_message = (
-    "You are a medical report assistant designed to analyze and interpret content from uploaded medical reports. Provide concise summaries, highlight elevated values, and suggest simple, actionable recommendations to improve health. "
-    "Maintain a friendly, supportive tone, and avoid technical language."
+    "You are a medical report assistant designed to analyze and interpret content from uploaded medical reports. Users may upload an image of a report and ask questions such as, "
+    "'Which readings are high?' or 'Is there anything abnormal?' Your job is to extract data from the report using OCR, identify key values, and determine if any readings exceed standard medical limits. "
+    "If a user uploads a report without asking a question, provide a friendly, concise summary highlighting any significant findings. "
+    "For example, mention elevated values, potential concerns, and simple, actionable recommendations to improve health where necessary. "
+    "When interpreting readings, correct common OCR errors, such as misinterpreted decimals (e.g., '72' may be '7.2' based on context). "
+    "Maintain a friendly, supportive tone like a helpful companion, avoiding overly technical language or explanations about decimal corrections. "
+    "Focus on clear, accurate information that users can easily understand and act upon."
 )
 
-
 def preprocess_and_ocr(image, extract_digits=False):
+    """Preprocess image and perform OCR."""
     gray_image = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
     kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
     sharpened_image = cv2.filter2D(gray_image, -1, kernel)
@@ -53,10 +58,10 @@ def preprocess_and_ocr(image, extract_digits=False):
     api.SetImage(processed_image)
     text = api.GetUTF8Text()
     api.End()
-    return text
-
+    return text.strip()
 
 def query_model(prompt, temperature=0.7, max_length=1024):
+    """Query the LLaMA model with a given prompt."""
     sequences = pipeline(
         prompt,
         do_sample=True,
@@ -69,34 +74,37 @@ def query_model(prompt, temperature=0.7, max_length=1024):
     )
     return sequences[0]['generated_text']
 
-
 @app.post('/upload')
 async def upload_image(
     request: Request,
     image: UploadFile = File(...)
 ):
+    """Handle image upload and process with or without user query."""
     try:
-        # Read image content
+        # Read and process the uploaded image
         image_content = await image.read()
         with Image.open(io.BytesIO(image_content)) as img:
             img = img.convert("RGB")
         extracted_text = preprocess_and_ocr(img, extract_digits=True)
 
-        # Extract query_text from request body
+        # Parse the user-provided query_text if available
         body = await request.json()
-        query_text = body.get("query_text")
+        query_text = body.get("query_text", "").strip()
 
         if query_text:
-            query = query_text
+            # Combine OCR-extracted content with the user query
+            prompt = f"{system_message}\nExtracted text: {extracted_text}\nUser question: {query_text}"
         else:
-            query = f"Extracted text: {extracted_text}. Summarize the report in simple terms, highlight elevated values, and suggest actionable health advice."
+            # Summarize the extracted text if no query is provided
+            prompt = f"{system_message}\nExtracted text: {extracted_text}. Summarize the report in simple terms, highlight elevated values, and suggest actionable health advice."
 
-        response = query_model(f"{system_message}\n{query}")
+        # Generate a response using the LLaMA model
+        response = query_model(prompt)
         return JSONResponse(status_code=200, content={"summary": response})
+
     except Exception as e:
         print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
+        raise HTTPException(status_code=500, detail="An error occurred while processing the request.")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
