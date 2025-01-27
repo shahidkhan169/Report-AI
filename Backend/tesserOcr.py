@@ -93,7 +93,7 @@ async def upload_image(
 
         if query_text:
             # Combine OCR-extracted content with the user query
-            prompt = f"{system_message}\nExtracted text: {extracted_text}\nUser question: {query_text}"
+            prompt = f"{system_message}\nExtracted text: {extracted_text}\nUser question: {query_text} . Answer the question alone don't give additional information"
         else:
             # Summarize the extracted text if no query is provided
             prompt = f"{system_message}\nExtracted text: {extracted_text}. Summarize the report in simple terms, highlight elevated values, and suggest actionable health advice."
