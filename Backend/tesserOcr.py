@@ -81,15 +81,15 @@ async def upload_image(
 ):
     """Handle image upload and process with or without user query."""
     try:
+        # Parse the form data to extract query_text
+        form_data = await request.form()
+        query_text = form_data.get("query_text", "").strip()
+
         # Read and process the uploaded image
         image_content = await image.read()
         with Image.open(io.BytesIO(image_content)) as img:
             img = img.convert("RGB")
         extracted_text = preprocess_and_ocr(img, extract_digits=True)
-
-        # Parse the user-provided query_text if available
-        body = await request.json()
-        query_text = body.get("query_text", "").strip()
 
         if query_text:
             # Combine OCR-extracted content with the user query
@@ -105,6 +105,3 @@ async def upload_image(
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="An error occurred while processing the request.")
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
