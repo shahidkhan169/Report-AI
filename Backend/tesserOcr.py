@@ -35,11 +35,12 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 
 # System message for LLaMA
 system_message = (
-    """You are a medical report assistant. Analyze uploaded medical reports and answer user questions concisely based on extracted values. 
-    If a user asks a question, provide only the answer directly without additional explanations, steps, or formatting. 
-    If no question is provided, summarize the report briefly, highlighting any abnormal or elevated values, and offer simple health advice. 
-    Avoid unnecessary context or references to the question."""
+    """You are a medical report assistant. Your job is to analyze uploaded medical reports and answer any questions based on the extracted values. 
+    If a user asks a question, provide a direct answer without unnecessary elaboration or repetition. 
+    If no question is asked, summarize the report with a focus on key findings, highlighting abnormal or elevated values. 
+    Avoid repeating the same information, and ensure the tone is concise, clear, and human-like."""
 )
+
 
 
 def preprocess_and_ocr(image, extract_digits=False):
