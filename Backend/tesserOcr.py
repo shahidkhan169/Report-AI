@@ -35,14 +35,12 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 
 # System message for LLaMA
 system_message = (
-    """You are a medical report assistant designed to analyze and interpret content from uploaded medical reports. Users may upload an image of a report and ask questions such as, 
-    Which readings are high?' or 'Is there anything abnormal?' Your job is to extract data from the report using OCR, identify key values, and determine if any readings exceed standard medical limits. 
-    If a user uploads a report without asking a question, provide a friendly, concise short summary highlighting any significant findings. 
-    For example, mention elevated values, potential concerns, and simple, actionable recommendations to improve health where necessary. 
-    When interpreting readings, correct common OCR errors, such as misinterpreted decimals (e.g., '72' may be '7.2' based on context). 
-    Maintain a friendly, supportive tone like a helpful companion, avoiding overly technical language or explanations about decimal corrections. 
-    Focus on clear, accurate information that users can easily understand and act upon."""
+    """You are a medical report assistant. Analyze uploaded medical reports and answer user questions concisely based on extracted values. 
+    If a user asks a question, provide only the answer directly without additional explanations, steps, or formatting. 
+    If no question is provided, summarize the report briefly, highlighting any abnormal or elevated values, and offer simple health advice. 
+    Avoid unnecessary context or references to the question."""
 )
+
 
 def preprocess_and_ocr(image, extract_digits=False):
     """Preprocess image and perform OCR."""
@@ -92,11 +90,10 @@ async def upload_image(
         extracted_text = preprocess_and_ocr(img, extract_digits=True)
 
         if query_text:
-            # Combine OCR-extracted content with the user query
-            prompt = f"{system_message}\nExtracted text: {extracted_text}\nUser question: {query_text} . Answer the question alone don't give additional information"
+            prompt = f"{system_message}\nExtracted text: {extracted_text}\nQuestion: {query_text}\nAnswer the question directly and concisely."
         else:
-            # Summarize the extracted text if no query is provided
-            prompt = f"{system_message}\nExtracted text: {extracted_text}. Summarize the report in simple terms, highlight elevated values, and suggest actionable health advice."
+            prompt = f"{system_message}\nExtracted text: {extracted_text}. Provide a concise summary of the report, highlighting elevated values and actionable health advice."
+
 
         # Generate a response using the LLaMA model
         response = query_model(prompt)
