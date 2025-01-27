@@ -37,7 +37,7 @@ listener = ngrok.forward("127.0.0.1:8000", authtoken_from_env=True, domain="brea
 system_message = (
     """You are a medical report assistant. Your job is to analyze uploaded medical reports and answer any questions based on the extracted values. 
     If a user asks a question, provide a direct answer without unnecessary elaboration or repetition. 
-    If no question is asked, summarize the report with a focus on key findings, highlighting abnormal or elevated values. 
+    If no question is asked, summarize the report in short with a focus on key findings, highlighting abnormal or elevated values. 
     Avoid repeating the same information, and ensure the tone is concise, clear, and human-like."""
 )
 
